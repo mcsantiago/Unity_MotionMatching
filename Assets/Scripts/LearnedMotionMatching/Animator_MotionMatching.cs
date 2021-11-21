@@ -21,6 +21,10 @@ public class Animator_MotionMatching : MonoBehaviour
 
     private MatchingFeaturesDatabase _database;
 
+    // DEBUG
+    private string _featureVectorString;
+    private GUIStyle _currentStyle = null;
+
     // TODO: Have C++ handle calls to Tensorflow models
     [DllImport("MotionMatchingUnityPlugin", CallingConvention = CallingConvention.Cdecl)]
     private static extern int PrintANumber();
@@ -63,8 +67,38 @@ public class Animator_MotionMatching : MonoBehaviour
         // TODO: Feed feature vector into dictionary
 
         float[] featureVector = GetCurrentFeatureVector();
-        // string s = string.Join(", ", featureVector);
+        _featureVectorString = PrintUtil.FormatFloatToString(featureVector);
         // Debug.Log(s);
+    }
+
+    private void OnGUI()
+    {
+        InitStyles();
+        GUI.Box(new Rect(0, 0, 1000, 20), "Matthew Santiago (mxs123530@utdallas.edu)");
+        GUI.Box(new Rect(0, 20, 1000, 20), "CS 6323 - Computer Animation and Gaming Demo");
+        GUI.Box(new Rect(0, 40, 1000, 20), "FeatureVector: " + _featureVectorString);
+    }
+
+    private void InitStyles()
+    {
+        if (_currentStyle == null)
+        {
+            _currentStyle = new GUIStyle(GUI.skin.box);
+            _currentStyle.normal.background = MakeTex(2, 2, Color.gray);
+        }
+    }
+
+    private Texture2D MakeTex(int width, int height, Color col)
+    {
+        Color[] pix = new Color[width * height];
+        for (int i = 0; i < pix.Length; ++i)
+        {
+            pix[i] = col;
+        }
+        Texture2D result = new Texture2D(width, height);
+        result.SetPixels(pix);
+        result.Apply();
+        return result;
     }
 
     private float[] GetCurrentFeatureVector()
@@ -86,6 +120,14 @@ public class Animator_MotionMatching : MonoBehaviour
         currentFeatureVector[12] = _hipVelocity.x;
         currentFeatureVector[13] = _hipVelocity.y;
         currentFeatureVector[14] = _hipVelocity.z;
+        // TODO: Obtain trajectory positions
+        currentFeatureVector[15] = animator.velocity.x;
+        currentFeatureVector[16] = animator.velocity.y;
+        currentFeatureVector[17] = animator.velocity.z;
+        // TODO: Obtain trajectory velocities
+        currentFeatureVector[18] = animator.velocity.x;
+        currentFeatureVector[19] = animator.velocity.y;
+        currentFeatureVector[20] = animator.velocity.z;
         return currentFeatureVector;
     }
 }

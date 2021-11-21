@@ -14,6 +14,7 @@ public class MatchingFeaturesDatabase : MonoBehaviour
     }
 
     private List<float[]> _features;
+    [SerializeField] private Animator animator;
 
     private void Awake()
     {
@@ -30,10 +31,6 @@ public class MatchingFeaturesDatabase : MonoBehaviour
 
     private void Start()
     {
-        // TODO: Load all bvh files
-        TextAsset bvhFile = Resources.Load("lafan1/walk1_subject1.bvh") as TextAsset;
-        Debug.Log(bvhFile.text);
-        BVHParser bVHParser = new BVHParser(bvhFile.text);
         _features = new List<float[]>();
     }
 
