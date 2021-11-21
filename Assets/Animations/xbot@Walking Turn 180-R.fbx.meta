@@ -1,11 +1,11 @@
 fileFormatVersion: 2
-guid: 3e09cc5a91069c64ba001a55daf173f5
+guid: bc2a8b5d312c5104f958679b77744ca1
 ModelImporter:
   serializedVersion: 20101
   internalIDToNameTable:
   - first:
       74: -203655887218126122
-    second: Walking
+    second: Walking Turn 180-R
   externalObjects: {}
   materials:
     materialImportMode: 1
@@ -35,11 +35,11 @@ ModelImporter:
     extraUserProperties: []
     clipAnimations:
     - serializedVersion: 16
-      name: Walking
+      name: Walking Turn 180-R
       takeName: mixamo.com
       internalID: 0
       firstFrame: 0
-      lastFrame: 29
+      lastFrame: 30
       wrapMode: 0
       orientationOffsetY: 0
       level: 0
