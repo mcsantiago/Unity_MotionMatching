@@ -5,9 +5,9 @@ using UnityEngine;
 public class Animator_MotionMatching : MonoBehaviour
 {
     private Animator animator;
-    [SerializeField] private GameObject _hips;
-    [SerializeField] private GameObject _leftFoot;
-    [SerializeField] private GameObject _rightFoot;
+    [SerializeField] private GameObject _hips = null;
+    [SerializeField] private GameObject _leftFoot = null;
+    [SerializeField] private GameObject _rightFoot = null;
     private Vector3 _prevLeftFootPos;
     private Vector3 _prevRightFootPos;
     private Vector3 _leftFootVelocity;
@@ -54,9 +54,10 @@ public class Animator_MotionMatching : MonoBehaviour
         Vector3 newRightFootPosition = _rightFoot.transform.position;
         Vector3 newHipPosition = _hips.transform.position;
 
-        _leftFootVelocity = newLeftFootPosition - _prevLeftFootPos;
-        _rightFootVelocity = newRightFootPosition - _prevRightFootPos;
-        _hipVelocity = newHipPosition - _hipPosition;
+        // Velocities are small.. we may have to do this for all the animations
+        _leftFootVelocity = (newLeftFootPosition - _prevLeftFootPos) * 100;
+        _rightFootVelocity = (newRightFootPosition - _prevRightFootPos) * 100;
+        _hipVelocity = (newHipPosition - _hipPosition) * 100;
 
         _prevLeftFootPos = newLeftFootPosition;
         _prevRightFootPos = newRightFootPosition;
@@ -104,30 +105,40 @@ public class Animator_MotionMatching : MonoBehaviour
     private float[] GetCurrentFeatureVector()
     {
         float[] currentFeatureVector = new float[27];
+        // Calculate true local position - feet 
+        Vector3 leftFootPosition = _leftFoot.transform.position - _leftFoot.transform.root.position;
+        Vector3 rightFootPosition = _rightFoot.transform.position - _rightFoot.transform.root.position;
+
         // Get feet position
-        currentFeatureVector[0] = _leftFoot.transform.position.x;
-        currentFeatureVector[1] = _leftFoot.transform.position.y;
-        currentFeatureVector[2] = _leftFoot.transform.position.z;
-        currentFeatureVector[3] = _rightFoot.transform.position.x;
-        currentFeatureVector[4] = _rightFoot.transform.position.y;
-        currentFeatureVector[5] = _rightFoot.transform.position.z;
+        currentFeatureVector[0] = leftFootPosition.x;
+        currentFeatureVector[1] = leftFootPosition.y;
+        currentFeatureVector[2] = leftFootPosition.z;
+
+        currentFeatureVector[3] = rightFootPosition.x;
+        currentFeatureVector[4] = rightFootPosition.y;
+        currentFeatureVector[5] = rightFootPosition.z;
+
         currentFeatureVector[6] = _leftFootVelocity.x;
         currentFeatureVector[7] = _leftFootVelocity.y;
         currentFeatureVector[8] = _leftFootVelocity.z;
+
         currentFeatureVector[9] = _rightFootVelocity.x;
         currentFeatureVector[10] = _rightFootVelocity.y;
         currentFeatureVector[11] = _rightFootVelocity.z;
+
         currentFeatureVector[12] = _hipVelocity.x;
         currentFeatureVector[13] = _hipVelocity.y;
         currentFeatureVector[14] = _hipVelocity.z;
+
         // TODO: Obtain trajectory positions
-        currentFeatureVector[15] = animator.velocity.x;
+        currentFeatureVector[15] = (animator.velocity.x) * 100;
         currentFeatureVector[16] = animator.velocity.y;
         currentFeatureVector[17] = animator.velocity.z;
+
         // TODO: Obtain trajectory velocities
-        currentFeatureVector[18] = animator.velocity.x;
-        currentFeatureVector[19] = animator.velocity.y;
-        currentFeatureVector[20] = animator.velocity.z;
+        currentFeatureVector[21] = animator.velocity.x;
+        currentFeatureVector[22] = animator.velocity.y;
+        currentFeatureVector[23] = animator.velocity.z;
         return currentFeatureVector;
     }
 }

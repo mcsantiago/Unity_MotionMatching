@@ -5,7 +5,7 @@ using UnityEngine;
 public class ThirdPersonMovement : MonoBehaviour
 {
     private CharacterController _controller;
-    [SerializeField] private Transform _cam;
+    [SerializeField] private Transform _cam = null;
     [SerializeField] private float _speed = 6f;
     [SerializeField] private float _turnSmoothTime = 0.1f;
     private float _turnSmoothVelocity;
