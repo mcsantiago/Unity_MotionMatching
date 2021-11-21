@@ -63,8 +63,8 @@ public class Animator_MotionMatching : MonoBehaviour
         // TODO: Feed feature vector into dictionary
 
         float[] featureVector = GetCurrentFeatureVector();
-        string s = string.Join(", ", featureVector);
-        Debug.Log(s);
+        // string s = string.Join(", ", featureVector);
+        // Debug.Log(s);
     }
 
     private float[] GetCurrentFeatureVector()
