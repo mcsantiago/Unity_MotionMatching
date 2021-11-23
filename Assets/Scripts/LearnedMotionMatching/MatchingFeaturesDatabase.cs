@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.InteropServices;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -13,8 +14,23 @@ public class MatchingFeaturesDatabase : MonoBehaviour
         get { return _instance; }
     }
 
-    private List<float[]> _features;
-    [SerializeField] private Animator animator;
+    private List<(string name, float[] featureVector)> _database;
+
+    private Boolean _isLoaded;
+    public Boolean IsLoaded { get { return _isLoaded; } set { _isLoaded = value; } }
+
+    // TODO: Have C++ handle calls to Tensorflow models
+    [DllImport("MotionMatchingUnityPlugin", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int PrintANumber();
+
+    [DllImport("MotionMatchingUnityPlugin", CallingConvention = CallingConvention.Cdecl)]
+    private static extern IntPtr PrintHello();
+
+    [DllImport("MotionMatchingUnityPlugin", CallingConvention = CallingConvention.Cdecl)]
+    private static extern int AddTwoIntegers(int i1, int i2);
+
+    [DllImport("MotionMatchingUnityPlugin", CallingConvention = CallingConvention.Cdecl)]
+    private static extern float AddTwoFloats(float f1, float f2);
 
     private void Awake()
     {
@@ -31,31 +47,43 @@ public class MatchingFeaturesDatabase : MonoBehaviour
 
     private void Start()
     {
-        _features = new List<float[]>();
+        _database = new List<(string, float[])>();
     }
 
+    public void AddToDatabase(string name, float[] featureVector)
+    {
+        _database.Add((name, featureVector));
+    }
+
+    public void Print()
+    {
+        for (int i = 0; i < _database.Count; i++)
+        {
+            Debug.Log(_database[i].name + " " + PrintUtil.FormatFloatToString(_database[i].featureVector));
+        }
+    }
 
     /// <summary> Gets the feature vector closest to the 
     /// query feature vector </summary>
-    public float[] getClosestFeature(float[] query)
+    public (string, float) GetClosestFeature(float[] query)
     {
         int minIndex = -1;
         float minDistance = float.MaxValue;
-        for (int i = 0; i < _features.Count; i++)
+        for (int i = 0; i < _database.Count; i++)
         {
-            float d = distance(query, _features[i]);
+            float d = Distance(query, _database[i].featureVector);
             if (d < minDistance)
             {
                 minIndex = i;
                 minDistance = d;
             }
         }
-        return _features[minIndex];
+        return ("Base Layer.Walking", 0.25f);
     }
 
     /// <summary>Calculates the Euclidean distance between 
     /// two feature vectors</summary> 
-    private float distance(float[] query, float[] target)
+    private float Distance(float[] query, float[] target)
     {
         if (query.Length != target.Length)
         {

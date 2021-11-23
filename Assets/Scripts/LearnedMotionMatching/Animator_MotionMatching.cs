@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class Animator_MotionMatching : MonoBehaviour
 {
-    private Animator animator;
-    [SerializeField] private GameObject _hips = null;
-    [SerializeField] private GameObject _leftFoot = null;
-    [SerializeField] private GameObject _rightFoot = null;
+    private Animator _animator;
+    // [SerializeField] private GameObject _hips = null;
+    // [SerializeField] private GameObject _leftFoot = null;
+    // [SerializeField] private GameObject _rightFoot = null;
     private Vector3 _prevLeftFootPos;
     private Vector3 _prevRightFootPos;
     private Vector3 _leftFootVelocity;
@@ -25,39 +25,61 @@ public class Animator_MotionMatching : MonoBehaviour
     private string _featureVectorString;
     private GUIStyle _currentStyle = null;
 
-    // TODO: Have C++ handle calls to Tensorflow models
-    [DllImport("MotionMatchingUnityPlugin", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int PrintANumber();
-
-    [DllImport("MotionMatchingUnityPlugin", CallingConvention = CallingConvention.Cdecl)]
-    private static extern IntPtr PrintHello();
-
-    [DllImport("MotionMatchingUnityPlugin", CallingConvention = CallingConvention.Cdecl)]
-    private static extern int AddTwoIntegers(int i1, int i2);
-
-    [DllImport("MotionMatchingUnityPlugin", CallingConvention = CallingConvention.Cdecl)]
-    private static extern float AddTwoFloats(float f1, float f2);
-
     private void Start()
     {
         // TODO: We'll be using this to start playing on a certain spot of a sequence
-        animator = this.GetComponent<Animator>();
-        // animator.speed = 0f;
-        // animator.Play("Walking", 0, 0.5f);
+        _animator = this.GetComponent<Animator>();
         _database = MatchingFeaturesDatabase.Instance;
-        GetCurrentFeatureVector();
+
+        // Load all feature vectors
+        _animator.applyRootMotion = true;
+        _animator.speed = 0;
+        // foreach (AnimationClip ac in _animator.runtimeAnimatorController.animationClips)
+        // {
+        //     int numFrames = (int)(ac.frameRate * ac.length);
+        //     for (int i = 0; i < numFrames; i++)
+        //     {
+        //         float t = (float)(i / numFrames);
+        //         _animator.Play("Base Layer." + ac.name, 0, t);
+        //         SetFeatures(ac.frameRate);
+        //         float[] featureVector = GetCurrentFeatureVector();
+        //         _database.AddToDatabase(ac.name, featureVector);
+        //     }
+        // }
+        // _database.Print();
+
+        _animator.applyRootMotion = false;
+        _animator.speed = 1;
+        // _animator.Play("Base Layer.Idle", 0, 0); // Resume from beginning
     }
 
     private void Update()
     {
-        Vector3 newLeftFootPosition = _leftFoot.transform.position;
-        Vector3 newRightFootPosition = _rightFoot.transform.position;
-        Vector3 newHipPosition = _hips.transform.position;
+        // (string name, float normalizedTime) t = _database.GetClosestFeature(featureVector);
+        // _animator.Play(t.name, 0, t.normalizedTime);
+
+        // Debug.Log(s);
+    }
+
+    private void OnAnimatorIK(int layerIndex)
+    {
+        SetFeatures(Time.deltaTime);
+        float[] featureVector = GetCurrentFeatureVector();
+        _featureVectorString = PrintUtil.FormatFloatToString(featureVector);
+    }
+
+    private void SetFeatures(float dt)
+    {
+        Vector3 newLeftFootPosition = _animator.GetIKPosition(AvatarIKGoal.LeftFoot);
+        Vector3 newRightFootPosition = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
+        Vector3 newHipPosition = _animator.rootPosition;
+
+        Debug.Log("newLeftFootPosition: " + newLeftFootPosition);
 
         // Velocities are small.. we may have to do this for all the animations
-        _leftFootVelocity = (newLeftFootPosition - _prevLeftFootPos) * 100;
-        _rightFootVelocity = (newRightFootPosition - _prevRightFootPos) * 100;
-        _hipVelocity = (newHipPosition - _hipPosition) * 100;
+        _leftFootVelocity = (newLeftFootPosition - _prevLeftFootPos) / dt;
+        _rightFootVelocity = (newRightFootPosition - _prevRightFootPos) / dt;
+        _hipVelocity = (newHipPosition - _hipPosition) / dt;
 
         _prevLeftFootPos = newLeftFootPosition;
         _prevRightFootPos = newRightFootPosition;
@@ -65,11 +87,6 @@ public class Animator_MotionMatching : MonoBehaviour
 
         // TODO: Obtain trajectory positions
         // TODO: Obtain trajectory velocities
-        // TODO: Feed feature vector into dictionary
-
-        float[] featureVector = GetCurrentFeatureVector();
-        _featureVectorString = PrintUtil.FormatFloatToString(featureVector);
-        // Debug.Log(s);
     }
 
     private void OnGUI()
@@ -106,8 +123,8 @@ public class Animator_MotionMatching : MonoBehaviour
     {
         float[] currentFeatureVector = new float[27];
         // Calculate true local position - feet 
-        Vector3 leftFootPosition = _leftFoot.transform.position - _leftFoot.transform.root.position;
-        Vector3 rightFootPosition = _rightFoot.transform.position - _rightFoot.transform.root.position;
+        Vector3 leftFootPosition = _animator.GetIKPosition(AvatarIKGoal.LeftFoot);
+        Vector3 rightFootPosition = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
 
         // Get feet position
         currentFeatureVector[0] = leftFootPosition.x;
@@ -131,14 +148,14 @@ public class Animator_MotionMatching : MonoBehaviour
         currentFeatureVector[14] = _hipVelocity.z;
 
         // TODO: Obtain trajectory positions
-        currentFeatureVector[15] = (animator.velocity.x) * 100;
-        currentFeatureVector[16] = animator.velocity.y;
-        currentFeatureVector[17] = animator.velocity.z;
+        currentFeatureVector[15] = _animator.velocity.x;
+        currentFeatureVector[16] = _animator.velocity.y;
+        currentFeatureVector[17] = _animator.velocity.z;
 
         // TODO: Obtain trajectory velocities
-        currentFeatureVector[21] = animator.velocity.x;
-        currentFeatureVector[22] = animator.velocity.y;
-        currentFeatureVector[23] = animator.velocity.z;
+        currentFeatureVector[21] = _animator.velocity.x;
+        currentFeatureVector[22] = _animator.velocity.y;
+        currentFeatureVector[23] = _animator.velocity.z;
         return currentFeatureVector;
     }
 }
