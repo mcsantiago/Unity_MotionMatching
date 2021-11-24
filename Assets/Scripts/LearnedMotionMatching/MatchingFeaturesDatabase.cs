@@ -16,7 +16,8 @@ public class MatchingFeaturesDatabase : MonoBehaviour
 
     private List<(string name, float[] featureVector)> _database;
 
-    private Boolean _isLoaded;
+    [SerializeField] private string _databaseFile;
+
     public Boolean IsLoaded { get { return _isLoaded; } set { _isLoaded = value; } }
 
     // TODO: Have C++ handle calls to Tensorflow models

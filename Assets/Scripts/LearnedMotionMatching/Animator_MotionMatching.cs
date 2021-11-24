@@ -21,6 +21,10 @@ public class Animator_MotionMatching : MonoBehaviour
 
     private MatchingFeaturesDatabase _database;
 
+    private Boolean _isLoaded = false;
+    private int _currentClip = 0;
+    private int _currentFrame = 0;
+
     // DEBUG
     private string _featureVectorString;
     private GUIStyle _currentStyle = null;
@@ -31,30 +35,41 @@ public class Animator_MotionMatching : MonoBehaviour
         _animator = this.GetComponent<Animator>();
         _database = MatchingFeaturesDatabase.Instance;
 
-        // Load all feature vectors
-        _animator.applyRootMotion = true;
-        _animator.speed = 0;
-        // foreach (AnimationClip ac in _animator.runtimeAnimatorController.animationClips)
-        // {
-        //     int numFrames = (int)(ac.frameRate * ac.length);
-        //     for (int i = 0; i < numFrames; i++)
-        //     {
-        //         float t = (float)(i / numFrames);
-        //         _animator.Play("Base Layer." + ac.name, 0, t);
-        //         SetFeatures(ac.frameRate);
-        //         float[] featureVector = GetCurrentFeatureVector();
-        //         _database.AddToDatabase(ac.name, featureVector);
-        //     }
-        // }
-        // _database.Print();
-
-        _animator.applyRootMotion = false;
-        _animator.speed = 1;
-        // _animator.Play("Base Layer.Idle", 0, 0); // Resume from beginning
+        //_animator.Play("Base Layer.Idle", 0, 0); // Resume from beginning
     }
 
-    private void Update()
+    private void LateUpdate()
     {
+        if (!_isLoaded)
+        {
+            // Load all feature vectors
+            _animator.applyRootMotion = true;
+            _animator.speed = 0;
+            AnimationClip ac = _animator.runtimeAnimatorController.animationClips[_currentClip];
+            int numFrames = (int)(ac.frameRate * ac.length);
+            if (_currentFrame < numFrames)
+            {
+                float t = (float)(_currentFrame / numFrames);
+                _animator.Play("Base Layer." + ac.name, 0, t);
+                SetFeatures(ac.frameRate);
+                float[] featureVector = GetCurrentFeatureVector();
+                _database.AddToDatabase(ac.name, featureVector);
+                _currentFrame++;
+            }
+            else
+            {
+                _currentClip++;
+                _currentFrame = 0;
+            }
+            _animator.applyRootMotion = false;
+            _animator.speed = 1;
+            if (_currentClip == _animator.runtimeAnimatorController.animationClips.Length - 1)
+            {
+                _database.Print();
+                _isLoaded = true;
+            }
+        }
+
         // (string name, float normalizedTime) t = _database.GetClosestFeature(featureVector);
         // _animator.Play(t.name, 0, t.normalizedTime);
 
@@ -73,8 +88,6 @@ public class Animator_MotionMatching : MonoBehaviour
         Vector3 newLeftFootPosition = _animator.GetIKPosition(AvatarIKGoal.LeftFoot);
         Vector3 newRightFootPosition = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
         Vector3 newHipPosition = _animator.rootPosition;
-
-        Debug.Log("newLeftFootPosition: " + newLeftFootPosition);
 
         // Velocities are small.. we may have to do this for all the animations
         _leftFootVelocity = (newLeftFootPosition - _prevLeftFootPos) / dt;
