@@ -18,8 +18,6 @@ public class MatchingFeaturesDatabase : MonoBehaviour
 
     [SerializeField] private string _databaseFile;
 
-    public Boolean IsLoaded { get { return _isLoaded; } set { _isLoaded = value; } }
-
     // TODO: Have C++ handle calls to Tensorflow models
     [DllImport("MotionMatchingUnityPlugin", CallingConvention = CallingConvention.Cdecl)]
     private static extern int PrintANumber();

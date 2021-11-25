@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Linq;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -9,7 +8,7 @@ public class BVHProcessor
     public int frames = 0;
     public float frameTime = 1000f / 60f;
     public BVHBone root;
-    public List<string> featureVectors;
+    public List<FeatureVector> featureVectors;
     public string name;
     private List<BVHBone> boneList;
 
@@ -476,6 +475,7 @@ public class BVHProcessor
         }
 
         BVHBone leftFoot = boneList.Where(b => b.name.ToLower().Equals("leftfoot")).FirstOrDefault();
+        Debug.Log(leftFoot.channels[5]);
         BVHBone rightFoot = boneList.Where(b => b.name.ToLower().Equals("rightfoot")).FirstOrDefault();
         BVHBone hip = boneList.Where(b => b.name.ToLower().Equals("hips")).FirstOrDefault();
 
@@ -492,49 +492,58 @@ public class BVHProcessor
                 assure("channel value", getFloat(out channels[channel][i]));
             }
             // Derive the feature vector
-            // Get Left Foot Position
-            Vector3 leftFootPosition = GetBonePosition(leftFoot, i);
+            FeatureVector prevFeatureVector1 = null; // One frame back
+            FeatureVector prevFeatureVector2 = null; // Two frames back
+            if (featureVectors.Count > 0)
+            {
+                prevFeatureVector1 = featureVectors[featureVectors.Count - 1];
+            }
+            if (featureVectors.Count > 1)
+            {
+                prevFeatureVector2 = featureVectors[featureVectors.Count - 2];
+            }
+            FeatureVector featureVector = new FeatureVector(name);
+            featureVector.LeftFootPosition = GetBonePosition(leftFoot, i);
             // Get Left Foot Velocity
-            Vector3 leftFootVelocity = (leftFootPosition - prevLeftFootPosition) / frameTime;
+            featureVector.LeftFootVelocity = (featureVector.LeftFootPosition - prevLeftFootPosition) / frameTime;
             // Get Right Foot Position
-            Vector3 rightFootPosition = GetBonePosition(rightFoot, i);
+            featureVector.RightFootPosition = GetBonePosition(rightFoot, i);
             // Get Right Foot Velocity
-            Vector3 rightFootVelocity = (rightFootPosition - prevRightFootPosition) / frameTime;
+            featureVector.RightFootVelocity = (featureVector.RightFootPosition - prevRightFootPosition) / frameTime;
             // Get Hip Velocity
-            Vector3 hipPosition = new Vector3(hip.channels[0].values[i], hip.channels[1].values[i], hip.channels[2].values[i]);
-            Vector3 hipVelocity = (hipPosition - prevHipPosition) / frameTime;
+            featureVector.HipPosition = new Vector3(hip.channels[0].values[i], hip.channels[1].values[i], hip.channels[2].values[i]);
+            featureVector.HipVelocity = (featureVector.HipPosition - prevHipPosition) / frameTime;
             // Get Hip Position of next two frames
-            Vector3 hipPosition_1 = new Vector3(hip.channels[0].values[(i + 1) % frames], hip.channels[1].values[(i + 1) % frames], hip.channels[2].values[(i + 1) % frames]);
-            Vector3 hipPosition_2 = new Vector3(hip.channels[0].values[(i + 2) % frames], hip.channels[1].values[(i + 2) % frames], hip.channels[2].values[(i + 1) % frames]);
-            // Get Hip Direction of next two frames
-            Vector3 hipDir_1 = hipPosition_1 - hipPosition;
-            Vector3 hipDir_2 = hipPosition_2 - hipPosition_1;
-            // NOW ENCODE IT
-            string featureVector = EncodeFeatureVector(leftFootPosition, leftFootVelocity, rightFootPosition, rightFootVelocity, hipVelocity, hipPosition_1, hipPosition_2, hipDir_1, hipDir_2);
+            if (prevFeatureVector1 != null)
+            {
+                prevFeatureVector1.HipPosition_1 = new Vector3(hip.channels[0].values[i], hip.channels[1].values[i], hip.channels[2].values[i]);
+                prevFeatureVector1.HipDir_1 = prevFeatureVector1.HipPosition_1 - prevFeatureVector1.HipPosition;
+            }
+            if (prevFeatureVector2 != null)
+            {
+                prevFeatureVector2.HipPosition_2 = new Vector3(hip.channels[0].values[i], hip.channels[1].values[i], hip.channels[2].values[i]);
+                // Get Hip Direction of next two frames
+                prevFeatureVector2.HipDir_2 = prevFeatureVector2.HipPosition_2 - prevFeatureVector2.HipPosition_1;
+
+            }
+
+            prevLeftFootPosition = featureVector.LeftFootPosition;
+            prevRightFootPosition = featureVector.RightFootPosition;
+            prevHipPosition = featureVector.HipPosition;
+
             featureVectors.Add(featureVector);
         }
     }
 
-    private string EncodeFeatureVector(Vector3 lfp, Vector3 lfv, Vector3 rfp, Vector3 rfv, Vector3 hv, Vector3 hp1, Vector3 hp2, Vector3 hd1, Vector3 hd2)
-    {
-        return this.name + ", " + lfp.x + ", " + lfp.y + ", " + lfp.z + ", " +
-                lfv.x + ", " + lfv.y + ", " + lfv.z + ", " +
-                rfp.x + ", " + rfp.y + ", " + rfp.z + ", " +
-                rfv.x + ", " + rfv.y + ", " + rfv.z + ", " +
-                hv.x + ", " + hv.y + ", " + hv.z + ", " +
-                hp1.x + ", " + hp1.y + ", " + hp1.z + ", " +
-                hp2.x + ", " + hp2.y + ", " + hp2.z + ", " +
-                hd1.x + ", " + hd1.y + ", " + hd1.z + ", " +
-                hd2.x + ", " + hd2.y + ", " + hd2.z;
-    }
-
     private Vector3 GetBonePosition(BVHBone bone, int frame)
     {
+        Vector3 position = new Vector3();
         Matrix4x4 rotateZ = Matrix4x4.Rotate(Quaternion.Euler(0, 0, bone.channels[5].values[frame]));
         Matrix4x4 rotateY = Matrix4x4.Rotate(Quaternion.Euler(0, bone.channels[4].values[frame], 0));
         Matrix4x4 rotateX = Matrix4x4.Rotate(Quaternion.Euler(bone.channels[3].values[frame], 0, 0));
         Matrix4x4 offset = Matrix4x4.Translate(new Vector3(bone.offsetX, bone.offsetY, bone.offsetZ));
         Matrix4x4 model = rotateZ * rotateY * rotateX * offset;
+        position = model.MultiplyPoint3x4(position);
         BVHBone parent = bone.parent;
         while (parent != null)
         {
@@ -543,10 +552,9 @@ public class BVHProcessor
             Matrix4x4 parentRotateX = Matrix4x4.Rotate(Quaternion.Euler(parent.channels[3].values[frame], 0, 0));
             Matrix4x4 parentOffset = Matrix4x4.Translate(new Vector3(parent.offsetX, parent.offsetY, parent.offsetZ));
             Matrix4x4 parentModel = parentRotateZ * parentRotateY * parentRotateX * parentOffset;
+            position = parentModel.MultiplyPoint3x4(position);
             parent = parent.parent;
-            model *= parentModel;
         }
-        Vector3 position = new Vector3(model[3, 0], model[3, 1], model[3, 2]);
         return position;
     }
 
@@ -554,7 +562,7 @@ public class BVHProcessor
     {
         this.bvhText = bvhText;
         this.name = name;
-        this.featureVectors = new List<string>();
+        this.featureVectors = new List<FeatureVector>();
 
         parse(false, 0f);
     }

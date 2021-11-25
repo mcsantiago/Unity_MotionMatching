@@ -25,21 +25,20 @@ public class CreateMatchingFeaturesDatabase : ScriptableWizard
             {
                 FileInfo fi = new FileInfo(file);
                 string bvhData = File.ReadAllText(file);
-                Debug.Log("Processing " + fi.Name);
                 BVHProcessor bp = new BVHProcessor(bvhData, fi.Name);
                 WriteDatabase(output, bp.featureVectors);
             }
         }
     }
 
-    private void WriteDatabase(string path, List<string> featureVectors)
+    private void WriteDatabase(string path, List<FeatureVector> featureVectors)
     {
         FileInfo fi = new FileInfo(path);
         using (StreamWriter sw = fi.AppendText())
         {
-            foreach (string featureVector in featureVectors)
+            foreach (FeatureVector featureVector in featureVectors)
             {
-                sw.WriteLine(featureVector);
+                sw.WriteLine(featureVector.ToString());
             }
         }
     }
