@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Runtime.InteropServices;
 using System.Linq;
 using System.Collections;
@@ -75,7 +75,6 @@ public class MatchingFeaturesDatabase
             AddToDatabase(name, featureVector);
         }
 
-        Print();
     }
 
     public void AddToDatabase(string name, float[] featureVector)
@@ -93,7 +92,7 @@ public class MatchingFeaturesDatabase
 
     /// <summary> Gets the feature vector closest to the 
     /// query feature vector </summary>
-    public (string, float) GetClosestFeature(float[] query)
+    public (AnimationClip, float) GetClosestFeature(float[] query)
     {
         int minIndex = -1;
         float minDistance = float.MaxValue;
@@ -106,7 +105,7 @@ public class MatchingFeaturesDatabase
                 minDistance = d;
             }
         }
-        return ("Base Layer.Walking", 0.25f);
+        return (new AnimationClip(), 0.25f);
     }
 
     /// <summary>Calculates the Euclidean distance between 

@@ -10,115 +10,13 @@ public class BVHProcessor
     public BVHBone root;
     public List<FeatureVector> featureVectors;
     public string name;
-    private List<BVHBone> boneList;
+    public List<BVHBone> boneList;
 
     static private char[] charMap = null;
     private float[][] channels;
     private string bvhText;
     private int pos = 0;
 
-    public class BVHBone
-    {
-        public string name;
-        public List<BVHBone> children;
-        public float offsetX, offsetY, offsetZ;
-        public int[] channelOrder;
-        public int channelNumber;
-        public BVHChannel[] channels;
-        public BVHBone parent;
-
-        private BVHProcessor bp;
-
-        // 0 = Xpos, 1 = Ypos, 2 = Zpos, 3 = Xrot, 4 = Yrot, 5 = Zrot
-        public struct BVHChannel
-        {
-            public bool enabled;
-            public float[] values;
-        }
-
-        public BVHBone(BVHProcessor parser, bool rootBone, BVHBone parent = null)
-        {
-            bp = parser;
-            bp.boneList.Add(this);
-            channels = new BVHChannel[6];
-            // X Pos, Y Pos, Z Pos, Z Rot, Y Rot, X Rot
-            channelOrder = new int[6] { 0, 1, 2, 5, 4, 3 };
-            children = new List<BVHBone>();
-            this.parent = parent;
-
-            bp.skip();
-            if (rootBone)
-            {
-                bp.assureExpect("ROOT");
-            }
-            else
-            {
-                bp.assureExpect("JOINT");
-            }
-            bp.assure("joint name", bp.getString(out name));
-            bp.skip();
-            bp.assureExpect("{");
-            bp.skip();
-            bp.assureExpect("OFFSET");
-            bp.skip();
-            bp.assure("offset X", bp.getFloat(out offsetX));
-            bp.skip();
-            bp.assure("offset Y", bp.getFloat(out offsetY));
-            bp.skip();
-            bp.assure("offset Z", bp.getFloat(out offsetZ));
-            bp.skip();
-            bp.assureExpect("CHANNELS");
-
-            bp.skip();
-            bp.assure("channel number", bp.getInt(out channelNumber));
-            bp.assure("valid channel number", channelNumber >= 1 && channelNumber <= 6);
-
-            for (int i = 0; i < channelNumber; i++)
-            {
-                bp.skip();
-                int channelId;
-                bp.assure("channel ID", bp.getChannel(out channelId));
-                channelOrder[i] = channelId;
-                channels[channelId].enabled = true;
-            }
-
-            char peek = ' ';
-            do
-            {
-                float ignored;
-                bp.skip();
-                bp.assure("child joint", bp.peek(out peek));
-                switch (peek)
-                {
-                    case 'J':
-                        BVHBone child = new BVHBone(bp, false, this);
-                        children.Add(child);
-                        break;
-                    case 'E':
-                        bp.assureExpect("End Site");
-                        bp.skip();
-                        bp.assureExpect("{");
-                        bp.skip();
-                        bp.assureExpect("OFFSET");
-                        bp.skip();
-                        bp.assure("end site offset X", bp.getFloat(out ignored));
-                        bp.skip();
-                        bp.assure("end site offset Y", bp.getFloat(out ignored));
-                        bp.skip();
-                        bp.assure("end site offset Z", bp.getFloat(out ignored));
-                        bp.skip();
-                        bp.assureExpect("}");
-                        break;
-                    case '}':
-                        bp.assureExpect("}");
-                        break;
-                    default:
-                        bp.assure("child joint", false);
-                        break;
-                }
-            } while (peek != '}');
-        }
-    }
 
     public override string ToString()
     {
@@ -351,65 +249,6 @@ public class BVHProcessor
         assure(text, expect(text));
     }
 
-    /*private void tryCustomFloats(string[] floats) {
-        float total = 0f;
-        foreach (string f in floats) {
-            pos = 0;
-            bvhText = f;
-            float v;
-            getFloat(out v);
-            total += v;
-        }
-        Debug.Log("Custom: " + total);
-    }
-
-    private void tryStandardFloats(string[] floats) {
-        IFormatProvider fp = CultureInfo.InvariantCulture;
-        float total = 0f;
-        foreach (string f in floats) {
-            float v = float.Parse(f, fp);
-            total += v;
-        }
-        Debug.Log("Standard: " + total);
-    }
-
-    private void tryCustomInts(string[] ints) {
-        int total = 0;
-        foreach (string i in ints) {
-            pos = 0;
-            bvhText = i;
-            int v;
-            getInt(out v);
-            total += v;
-        }
-        Debug.Log("Custom: " + total);
-    }
-
-    private void tryStandardInts(string[] ints) {
-        IFormatProvider fp = CultureInfo.InvariantCulture;
-        int total = 0;
-        foreach (string i in ints) {
-            int v = int.Parse(i, fp);
-            total += v;
-        }
-        Debug.Log("Standard: " + total);
-    }
-
-    public void benchmark () {
-        string[] floats = new string[105018];
-        string[] ints = new string[105018];
-        for (int i = 0; i < floats.Length; i++) {
-            floats[i] = UnityEngine.Random.Range(-180f, 180f).ToString();
-        }
-        for (int i = 0; i < ints.Length; i++) {
-            ints[i] = ((int)Mathf.Round(UnityEngine.Random.Range(-180f, 18000f))).ToString();
-        }
-        tryCustomFloats(floats);
-        tryStandardFloats(floats);
-        tryCustomInts(ints);
-        tryStandardInts(ints);
-    }*/
-
     private void parse(bool overrideFrameTime, float time)
     {
         // Prepare character table
@@ -438,7 +277,7 @@ public class BVHProcessor
         assureExpect("HIERARCHY");
 
         boneList = new List<BVHBone>();
-        root = new BVHBone(this, true);
+        root = CreateBone();
 
         // Parse meta data
         skip();
@@ -475,7 +314,6 @@ public class BVHProcessor
         }
 
         BVHBone leftFoot = boneList.Where(b => b.name.ToLower().Equals("leftfoot")).FirstOrDefault();
-        Debug.Log(leftFoot.channels[5]);
         BVHBone rightFoot = boneList.Where(b => b.name.ToLower().Equals("rightfoot")).FirstOrDefault();
         BVHBone hip = boneList.Where(b => b.name.ToLower().Equals("hips")).FirstOrDefault();
 
@@ -533,6 +371,84 @@ public class BVHProcessor
 
             featureVectors.Add(featureVector);
         }
+    }
+
+    private BVHBone CreateBone(BVHBone parent = null)
+    {
+        BVHBone bone = new BVHBone(parent);
+        skip();
+        if (parent == null)
+        {
+            assureExpect("ROOT");
+        }
+        else
+        {
+            assureExpect("JOINT");
+        }
+        assure("joint name", getString(out bone.name));
+        skip();
+        assureExpect("{");
+        skip();
+        assureExpect("OFFSET");
+        skip();
+        assure("offset X", getFloat(out bone.offsetX));
+        skip();
+        assure("offset Y", getFloat(out bone.offsetY));
+        skip();
+        assure("offset Z", getFloat(out bone.offsetZ));
+        skip();
+        assureExpect("CHANNELS");
+
+        skip();
+        assure("channel number", getInt(out bone.channelNumber));
+        assure("valid channel number", bone.channelNumber >= 1 && bone.channelNumber <= 6);
+
+        for (int i = 0; i < bone.channelNumber; i++)
+        {
+            skip();
+            int channelId;
+            assure("channel ID", getChannel(out channelId));
+            bone.channelOrder[i] = channelId;
+            bone.channels[channelId].enabled = true;
+        }
+
+        char peek = ' ';
+        do
+        {
+            float ignored;
+            skip();
+            assure("child joint", this.peek(out peek));
+            switch (peek)
+            {
+                case 'J':
+                    BVHBone child = CreateBone(bone);
+                    bone.children.Add(child);
+                    break;
+                case 'E':
+                    assureExpect("End Site");
+                    skip();
+                    assureExpect("{");
+                    skip();
+                    assureExpect("OFFSET");
+                    skip();
+                    assure("end site offset X", getFloat(out ignored));
+                    skip();
+                    assure("end site offset Y", getFloat(out ignored));
+                    skip();
+                    assure("end site offset Z", getFloat(out ignored));
+                    skip();
+                    assureExpect("}");
+                    break;
+                case '}':
+                    assureExpect("}");
+                    break;
+                default:
+                    assure("child joint", false);
+                    break;
+            }
+        } while (peek != '}');
+        boneList.Add(bone);
+        return bone;
     }
 
     private Vector3 GetBonePosition(BVHBone bone, int frame)

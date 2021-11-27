@@ -6,7 +6,7 @@ using UnityEditor;
 public class CreateMatchingFeaturesDatabase : ScriptableWizard
 {
     [SerializeField]
-    private string sourceDir = "C:\\repos\\CS6323\\final_project\\Learned Motion Matching Impl\\Assets\\Resources\\lafan1";
+    private string sourceDir = "Assets\\Resources\\lafan1";
 
     [MenuItem("Motion Matching/Create Matching Features Database From BVH")]
     static void MotionMatchingWizard()
