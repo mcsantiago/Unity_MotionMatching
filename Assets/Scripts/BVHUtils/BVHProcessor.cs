@@ -341,6 +341,7 @@ public class BVHProcessor
                 prevFeatureVector2 = featureVectors[featureVectors.Count - 2];
             }
             FeatureVector featureVector = new FeatureVector(name);
+            featureVector.Frame = i;
             featureVector.LeftFootPosition = GetBonePosition(leftFoot, i);
             // Get Left Foot Velocity
             featureVector.LeftFootVelocity = (featureVector.LeftFootPosition - prevLeftFootPosition) / frameTime;

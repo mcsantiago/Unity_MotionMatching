@@ -25,7 +25,7 @@ public class CreateMatchingFeaturesDatabase : ScriptableWizard
             {
                 FileInfo fi = new FileInfo(file);
                 string bvhData = File.ReadAllText(file);
-                BVHProcessor bp = new BVHProcessor(bvhData, fi.Name);
+                BVHProcessor bp = new BVHProcessor(bvhData, fi.Name.Split('.')[0]);
                 WriteDatabase(output, bp.featureVectors);
             }
         }

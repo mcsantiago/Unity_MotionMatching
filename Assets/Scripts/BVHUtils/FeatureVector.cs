@@ -4,6 +4,7 @@ using UnityEngine;
 public class FeatureVector
 {
     public string Name { get; set; }
+    public int Frame { get; set; }
     public Vector3 LeftFootPosition { get; set; }
     public Vector3 LeftFootVelocity { get; set; }
     public Vector3 RightFootPosition { get; set; }
@@ -22,7 +23,7 @@ public class FeatureVector
 
     public override string ToString()
     {
-        return Name + ", " + LeftFootPosition.x + ", " + LeftFootPosition.y + ", " + LeftFootPosition.z + ", " +
+        return Name + ", " + Frame + ", " + LeftFootPosition.x + ", " + LeftFootPosition.y + ", " + LeftFootPosition.z + ", " +
                 LeftFootVelocity.x + ", " + LeftFootVelocity.y + ", " + LeftFootVelocity.z + ", " +
                 RightFootPosition.x + ", " + RightFootPosition.y + ", " + RightFootPosition.z + ", " +
                 RightFootVelocity.x + ", " + RightFootVelocity.y + ", " + RightFootVelocity.z + ", " +

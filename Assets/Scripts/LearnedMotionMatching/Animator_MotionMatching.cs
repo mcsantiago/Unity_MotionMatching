@@ -39,6 +39,12 @@ public class Animator_MotionMatching : MonoBehaviour
     {
         SetFeatures(Time.deltaTime);
         float[] featureVector = GetCurrentFeatureVector();
+        if (_database != null)
+        {
+            (string animationName, float t) = _database.GetClosestFeature(featureVector);
+            _animator.Play(animationName, 0, t);
+            Debug.Log("Now playing " + animationName + " at " + t);
+        }
         _featureVectorString = PrintUtil.FormatFloatToString(featureVector);
     }
 

@@ -17,7 +17,7 @@ public class MatchingFeaturesDatabase
 
     private List<AnimationClip> _animationClips;
 
-    private List<(string name, float[] featureVector)> _database;
+    private List<(string name, int frame, float[] featureVector)> _database;
 
     private string _databaseFilePath;
     private string _databaseText;
@@ -50,7 +50,7 @@ public class MatchingFeaturesDatabase
 
     public MatchingFeaturesDatabase(string databaseFilePath)
     {
-        _database = new List<(string, float[])>();
+        _database = new List<(string, int, float[])>();
         _animationClips = new List<AnimationClip>();
         _databaseFilePath = databaseFilePath;
 
@@ -64,7 +64,9 @@ public class MatchingFeaturesDatabase
         {
             string[] featureVectorStrings = line.Split(',');
             string name = featureVectorStrings[0];
-            float[] featureVector = featureVectorStrings.Select(f =>
+            int.TryParse(featureVectorStrings[1], out int frame);
+            string[] featureVectorSection = featureVectorStrings.SubArray(2, 27);
+            float[] featureVector = featureVectorSection.Select(f =>
             {
                 if (float.TryParse(f, out float number))
                 {
@@ -72,14 +74,14 @@ public class MatchingFeaturesDatabase
                 }
                 return float.MinValue;
             }).ToArray();
-            AddToDatabase(name, featureVector);
+            AddToDatabase(name, frame, featureVector);
         }
 
     }
 
-    public void AddToDatabase(string name, float[] featureVector)
+    public void AddToDatabase(string name, int frame, float[] featureVector)
     {
-        _database.Add((name, featureVector));
+        _database.Add((name, frame, featureVector));
     }
 
     public void Print()
@@ -92,7 +94,7 @@ public class MatchingFeaturesDatabase
 
     /// <summary> Gets the feature vector closest to the 
     /// query feature vector </summary>
-    public (AnimationClip, float) GetClosestFeature(float[] query)
+    public (string, float) GetClosestFeature(float[] query)
     {
         int minIndex = -1;
         float minDistance = float.MaxValue;
@@ -105,7 +107,10 @@ public class MatchingFeaturesDatabase
                 minDistance = d;
             }
         }
-        return (new AnimationClip(), 0.25f);
+        string sequenceName = _database[minIndex].name;
+        int sequenceLength = _database.Count(d => d.name.ToLower().Equals(sequenceName));
+        int currentFrame = _database[minIndex].frame;
+        return (sequenceName, (float)currentFrame / sequenceLength);
     }
 
     /// <summary>Calculates the Euclidean distance between 
