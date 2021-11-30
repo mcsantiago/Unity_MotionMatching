@@ -10,6 +10,11 @@ public class ThirdPersonMovementKB : MonoBehaviour
     [SerializeField] private float _turnSmoothTime = 0.1f;
     private float _turnSmoothVelocity;
 
+    private Vector3 _moveDirection;
+    private Vector3 _moveVelocity;
+    public Vector3 MoveDirection { get { return _moveDirection; } }
+    public Vector3 MoveVelocity { get { return _moveVelocity; } }
+
     void Start()
     {
         _controller = GetComponent<CharacterController>();
@@ -45,8 +50,9 @@ public class ThirdPersonMovementKB : MonoBehaviour
             float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref _turnSmoothVelocity, _turnSmoothTime);
             transform.rotation = Quaternion.Euler(0f, angle, 0f);
 
-            Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-            _controller.Move(moveDir.normalized * _speed * Time.deltaTime);
+            _moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+            _moveVelocity = _moveDirection.normalized * _speed * Time.deltaTime;
+            _controller.Move(_moveVelocity);
         }
     }
 }

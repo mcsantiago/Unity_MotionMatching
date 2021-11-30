@@ -21,6 +21,7 @@ public class Animator_MotionMatching : MonoBehaviour
     private Vector3 _trajectoryVel2;
 
     private MatchingFeaturesDatabase _database;
+    private ThirdPersonMovementKB _thirdPersonMovement;
 
     private int _currentClip = 0;
     private int _currentFrame = 0;
@@ -32,6 +33,7 @@ public class Animator_MotionMatching : MonoBehaviour
     private void Start()
     {
         _animator = this.GetComponent<Animator>();
+        _thirdPersonMovement = this.GetComponentInParent<ThirdPersonMovementKB>();
         _database = new MatchingFeaturesDatabase(_databaseFilePath);
     }
 
@@ -54,8 +56,6 @@ public class Animator_MotionMatching : MonoBehaviour
         Vector3 newRightFootPosition = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
         Vector3 newHipPosition = _animator.rootPosition;
 
-        // Velocities are small..we may have to do this for all the animations
-
         _leftFootVelocity = (newLeftFootPosition - _prevLeftFootPos) / dt;
         _rightFootVelocity = (newRightFootPosition - _prevRightFootPos) / dt;
         _hipVelocity = (newHipPosition - _hipPosition) / dt;
@@ -64,8 +64,10 @@ public class Animator_MotionMatching : MonoBehaviour
         _prevRightFootPos = newRightFootPosition;
         _hipPosition = newHipPosition;
 
-        // TODO: Obtain trajectory positions
-        // TODO: Obtain trajectory velocities
+        _trajectoryPos1 = _thirdPersonMovement.MoveDirection;
+        _trajectoryPos2 = _thirdPersonMovement.MoveDirection;
+        _trajectoryVel1 = _thirdPersonMovement.MoveVelocity;
+        _trajectoryVel2 = _thirdPersonMovement.MoveVelocity;
     }
 
     private void OnGUI()
@@ -105,7 +107,6 @@ public class Animator_MotionMatching : MonoBehaviour
         Vector3 leftFootPosition = _animator.GetIKPosition(AvatarIKGoal.LeftFoot);
         Vector3 rightFootPosition = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
 
-        // Get feet position
         currentFeatureVector[0] = leftFootPosition.x;
         currentFeatureVector[1] = leftFootPosition.y;
         currentFeatureVector[2] = leftFootPosition.z;
@@ -126,8 +127,22 @@ public class Animator_MotionMatching : MonoBehaviour
         currentFeatureVector[13] = _hipVelocity.y;
         currentFeatureVector[14] = _hipVelocity.z;
 
-        // TODO: Obtain trajectory positions
-        // TODO: Obtain trajectory velocities
+        currentFeatureVector[15] = _trajectoryPos1.x;
+        currentFeatureVector[16] = _trajectoryPos1.y;
+        currentFeatureVector[17] = _trajectoryPos1.z;
+
+        currentFeatureVector[18] = _trajectoryPos2.x;
+        currentFeatureVector[19] = _trajectoryPos2.y;
+        currentFeatureVector[20] = _trajectoryPos2.z;
+
+        currentFeatureVector[21] = _trajectoryVel1.x;
+        currentFeatureVector[22] = _trajectoryVel1.y;
+        currentFeatureVector[23] = _trajectoryVel1.z;
+
+        currentFeatureVector[24] = _trajectoryVel2.x;
+        currentFeatureVector[25] = _trajectoryVel2.y;
+        currentFeatureVector[26] = _trajectoryVel2.z;
+
         return currentFeatureVector;
     }
 }
