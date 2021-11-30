@@ -1,12 +1,12 @@
-﻿using System.IO;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
+using UnityEngine;
 
 public class CreateMatchingFeaturesDatabase : ScriptableWizard
 {
     [SerializeField]
-    private string sourceDir = "Assets\\Resources\\lafan1";
+    private string sourceDir = "Assets/Resources/lafan1";
 
     [MenuItem("Motion Matching/Create Matching Features Database From BVH")]
     static void MotionMatchingWizard()

@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Linq;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class BVHProcessor
@@ -466,7 +466,7 @@ public class BVHProcessor
             Matrix4x4 parentRotateZ = Matrix4x4.Rotate(Quaternion.Euler(0, 0, parent.channels[5].values[frame]));
             Matrix4x4 parentRotateY = Matrix4x4.Rotate(Quaternion.Euler(0, parent.channels[4].values[frame], 0));
             Matrix4x4 parentRotateX = Matrix4x4.Rotate(Quaternion.Euler(parent.channels[3].values[frame], 0, 0));
-            Matrix4x4 parentOffset = Matrix4x4.Translate(new Vector3(parent.offsetX, parent.offsetY, parent.offsetZ));
+            Matrix4x4 parentOffset = !parent.name.Equals("Hips") ? Matrix4x4.Translate(new Vector3(parent.offsetX, parent.offsetY, parent.offsetZ)) : Matrix4x4.identity;
             Matrix4x4 parentModel = parentRotateZ * parentRotateY * parentRotateX * parentOffset;
             position = parentModel.MultiplyPoint3x4(position);
             parent = parent.parent;
