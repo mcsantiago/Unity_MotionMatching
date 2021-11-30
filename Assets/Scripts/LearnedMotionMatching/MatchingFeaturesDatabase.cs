@@ -9,12 +9,6 @@ using UnityEngine;
 /// <summary> </summary>
 public class MatchingFeaturesDatabase
 {
-    // private static MatchingFeaturesDatabase _instance;
-    // public static MatchingFeaturesDatabase Instance
-    // {
-    //     get { return _instance; }
-    // }
-
     private List<AnimationClip> _animationClips;
 
     private List<(string name, int frame, float[] featureVector)> _database;
@@ -34,19 +28,6 @@ public class MatchingFeaturesDatabase
 
     [DllImport("MotionMatchingUnityPlugin", CallingConvention = CallingConvention.Cdecl)]
     private static extern float AddTwoFloats(float f1, float f2);
-
-    // private void Awake()
-    // {
-    //     // This class is intended for use as a Singleton
-    //     if (_instance != null && _instance != this)
-    //     {
-    //         Destroy(this.gameObject);
-    //     }
-    //     else
-    //     {
-    //         _instance = this;
-    //     }
-    // }
 
     public MatchingFeaturesDatabase(string databaseFilePath)
     {
@@ -108,7 +89,7 @@ public class MatchingFeaturesDatabase
             }
         }
         string sequenceName = _database[minIndex].name;
-        int sequenceLength = _database.Count(d => d.name.ToLower().Equals(sequenceName));
+        int sequenceLength = _database.Count(d => d.name.ToLower().Equals(sequenceName)); // This might not scale in large databases
         int currentFrame = _database[minIndex].frame;
         return (sequenceName, (float)currentFrame / sequenceLength);
     }
