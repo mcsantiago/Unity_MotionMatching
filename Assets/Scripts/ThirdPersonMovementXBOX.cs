@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ThirdPersonMovementKB : MonoBehaviour
+public class ThirdPersonMovementXBOX : MonoBehaviour
 {
     private CharacterController _controller;
     [SerializeField] private Transform _cam = null;
