@@ -23,8 +23,9 @@ public class Animator_MotionMatching : MonoBehaviour
     private MatchingFeaturesDatabase _database;
     private ThirdPersonMovementKB _thirdPersonMovement;
 
-    private int _currentClip = 0;
-    private int _currentFrame = 0;
+    private bool _isIdle = false;
+    private string _currentClip = "";
+    private float _currentFrameTime = 0;
 
     // DEBUG
     private string _featureVectorString;
@@ -33,19 +34,41 @@ public class Animator_MotionMatching : MonoBehaviour
     private void Start()
     {
         _animator = this.GetComponent<Animator>();
+        _animator.speed = 1.0f;
         _thirdPersonMovement = this.GetComponentInParent<ThirdPersonMovementKB>();
         _database = new MatchingFeaturesDatabase(_databaseFilePath);
     }
 
+    private void Update()
+    {
+        if (_thirdPersonMovement.MoveDirection == Vector3.zero && !_animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
+        {
+            _animator.Play("Idle", 0);
+            _isIdle = true;
+        }
+        else if (_thirdPersonMovement.MoveDirection != Vector3.zero)
+        {
+            _isIdle = false;
+        }
+    }
+
     private void OnAnimatorIK(int layerIndex)
     {
+        if (_isIdle) return;
+
+        // TODO: If the animation clip direction is different from controller direction, THEN find another section to play
         SetFeatures(Time.deltaTime);
         float[] featureVector = GetCurrentFeatureVector();
         if (_database != null)
         {
             (string animationName, float t) = _database.GetClosestFeature(featureVector);
-            _animator.Play(animationName, 0, t);
-            Debug.Log("Now playing " + animationName + " at " + t);
+            if (!animationName.Equals(_currentClip) || Math.Abs(t - _currentFrameTime) > 1e-3)
+            {
+                _animator.Play(animationName, 0, t);
+                Debug.Log("Now playing " + animationName + " at " + t);
+                _currentClip = animationName;
+                _currentFrameTime = t;
+            }
         }
         _featureVectorString = PrintUtil.FormatFloatToString(featureVector);
     }
@@ -65,9 +88,10 @@ public class Animator_MotionMatching : MonoBehaviour
         _hipPosition = newHipPosition;
 
         _trajectoryPos1 = _thirdPersonMovement.MoveDirection;
-        _trajectoryPos2 = _thirdPersonMovement.MoveDirection;
+        _trajectoryPos2 = _thirdPersonMovement.MoveDirection * 2;
         _trajectoryVel1 = _thirdPersonMovement.MoveVelocity;
         _trajectoryVel2 = _thirdPersonMovement.MoveVelocity;
+
     }
 
     private void OnGUI()
@@ -106,6 +130,9 @@ public class Animator_MotionMatching : MonoBehaviour
 
         Vector3 leftFootPosition = _animator.GetIKPosition(AvatarIKGoal.LeftFoot);
         Vector3 rightFootPosition = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
+
+        leftFootPosition *= 10;
+        rightFootPosition *= 10;
 
         currentFeatureVector[0] = leftFootPosition.x;
         currentFeatureVector[1] = leftFootPosition.y;

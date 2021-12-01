@@ -54,5 +54,10 @@ public class ThirdPersonMovementKB : MonoBehaviour
             _moveVelocity = _moveDirection.normalized * _speed * Time.deltaTime;
             _controller.Move(_moveVelocity);
         }
+        else
+        {
+            _moveDirection = Vector3.zero;
+            _moveVelocity = Vector3.zero;
+        }
     }
 }

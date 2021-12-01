@@ -91,6 +91,8 @@ public class MatchingFeaturesDatabase
         string sequenceName = _database[minIndex].name;
         int sequenceLength = _database.Count(d => d.name.ToLower().Equals(sequenceName)); // This might not scale in large databases
         int currentFrame = _database[minIndex].frame;
+
+        Debug.Log("Found sequence " + sequenceName + " with frame " + currentFrame + " and distance " + minDistance);
         return (sequenceName, (float)currentFrame / sequenceLength);
     }
 
