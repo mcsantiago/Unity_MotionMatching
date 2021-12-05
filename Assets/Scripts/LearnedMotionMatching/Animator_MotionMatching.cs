@@ -64,7 +64,7 @@ public class Animator_MotionMatching : MonoBehaviour
             (string animationName, float t) = _database.GetClosestFeature(featureVector);
             if (!animationName.Equals(_currentClip) || Math.Abs(t - _currentFrameTime) > 1e-3)
             {
-                _animator.Play(animationName, 0, t);
+                _animator.Play("Base Layer." + animationName, 0, t);
                 Debug.Log("Now playing " + animationName + " at " + t);
                 _currentClip = animationName;
                 _currentFrameTime = t;
@@ -131,8 +131,8 @@ public class Animator_MotionMatching : MonoBehaviour
         Vector3 leftFootPosition = _animator.GetIKPosition(AvatarIKGoal.LeftFoot);
         Vector3 rightFootPosition = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
 
-        leftFootPosition *= 10;
-        rightFootPosition *= 10;
+        leftFootPosition *= 20;
+        rightFootPosition *= 20;
 
         currentFeatureVector[0] = leftFootPosition.x;
         currentFeatureVector[1] = leftFootPosition.y;
