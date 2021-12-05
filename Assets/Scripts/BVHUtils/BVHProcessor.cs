@@ -5,17 +5,19 @@ using UnityEngine;
 
 public class BVHProcessor
 {
-    public int frames = 0;
-    public float frameTime = 1000f / 60f;
-    public BVHBone root;
-    public List<FeatureVector> featureVectors;
-    public string name;
-    public List<BVHBone> boneList;
+    public int Frames = 0;
+    public float FrameTime = 1000f / 60f;
+    public BVHBone Root;
+    public List<FeatureVector> FeatureVectors;
+    public string Name;
+    public List<BVHBone> BoneList;
 
-    static private char[] charMap = null;
-    private float[][] channels;
-    private string bvhText;
-    private int pos = 0;
+    static private char[] _charMap = null;
+    private float[][] _channels;
+    private string _bvhText;
+    private int _pos = 0;
+    private int _offsetStart = 0;
+    private int _endFrame = -1;
 
 
     public override string ToString()
@@ -24,19 +26,19 @@ public class BVHProcessor
         // public float frametime = 1000f / 60f;
         // public bvhbone root;
         return "bvhprocessor:\n" +
-        "frames: " + frames + "\n" +
-        "frametime: " + frameTime + "\n" +
-        "root: " + root.name;
+        "frames: " + Frames + "\n" +
+        "frametime: " + FrameTime + "\n" +
+        "root: " + Root.name;
     }
 
     private bool peek(out char c)
     {
         c = ' ';
-        if (pos >= bvhText.Length)
+        if (_pos >= _bvhText.Length)
         {
             return false;
         }
-        c = bvhText[pos];
+        c = _bvhText[_pos];
         return true;
     }
 
@@ -44,11 +46,11 @@ public class BVHProcessor
     {
         foreach (char c in text)
         {
-            if (pos >= bvhText.Length || (c != bvhText[pos] && bvhText[pos] < 256 && c != charMap[bvhText[pos]]))
+            if (_pos >= _bvhText.Length || (c != _bvhText[_pos] && _bvhText[_pos] < 256 && c != _charMap[_bvhText[_pos]]))
             {
                 return false;
             }
-            pos++;
+            _pos++;
         }
         return true;
     }
@@ -56,9 +58,9 @@ public class BVHProcessor
     private bool getString(out string text)
     {
         text = "";
-        while (pos < bvhText.Length && bvhText[pos] != '\n' && bvhText[pos] != '\r')
+        while (_pos < _bvhText.Length && _bvhText[_pos] != '\n' && _bvhText[_pos] != '\r')
         {
-            text += bvhText[pos++];
+            text += _bvhText[_pos++];
         }
         text = text.Trim();
 
@@ -68,11 +70,11 @@ public class BVHProcessor
     private bool getChannel(out int channel)
     {
         channel = -1;
-        if (pos + 1 >= bvhText.Length)
+        if (_pos + 1 >= _bvhText.Length)
         {
             return false;
         }
-        switch (bvhText[pos])
+        switch (_bvhText[_pos])
         {
             case 'x':
             case 'X':
@@ -89,16 +91,16 @@ public class BVHProcessor
             default:
                 return false;
         }
-        pos++;
-        switch (bvhText[pos])
+        _pos++;
+        switch (_bvhText[_pos])
         {
             case 'p':
             case 'P':
-                pos++;
+                _pos++;
                 return expect("osition");
             case 'r':
             case 'R':
-                pos++;
+                _pos++;
                 channel += 3;
                 return expect("otation");
             default:
@@ -113,20 +115,20 @@ public class BVHProcessor
         v = 0;
 
         // Read sign
-        if (pos < bvhText.Length && bvhText[pos] == '-')
+        if (_pos < _bvhText.Length && _bvhText[_pos] == '-')
         {
             negate = true;
-            pos++;
+            _pos++;
         }
-        else if (pos < bvhText.Length && bvhText[pos] == '+')
+        else if (_pos < _bvhText.Length && _bvhText[_pos] == '+')
         {
-            pos++;
+            _pos++;
         }
 
         // Read digits
-        while (pos < bvhText.Length && bvhText[pos] >= '0' && bvhText[pos] <= '9')
+        while (_pos < _bvhText.Length && _bvhText[_pos] >= '0' && _bvhText[_pos] <= '9')
         {
-            v = v * 10 + (int)(bvhText[pos++] - '0');
+            v = v * 10 + (int)(_bvhText[_pos++] - '0');
             digitFound = true;
         }
 
@@ -151,33 +153,33 @@ public class BVHProcessor
         v = 0f;
 
         // Read sign
-        if (pos < bvhText.Length && bvhText[pos] == '-')
+        if (_pos < _bvhText.Length && _bvhText[_pos] == '-')
         {
             negate = true;
-            pos++;
+            _pos++;
         }
-        else if (pos < bvhText.Length && bvhText[pos] == '+')
+        else if (_pos < _bvhText.Length && _bvhText[_pos] == '+')
         {
-            pos++;
+            _pos++;
         }
 
         // Read digits before decimal point
-        while (pos < bvhText.Length && bvhText[pos] >= '0' && bvhText[pos] <= '9')
+        while (_pos < _bvhText.Length && _bvhText[_pos] >= '0' && _bvhText[_pos] <= '9')
         {
-            v = v * 10 + (float)(bvhText[pos++] - '0');
+            v = v * 10 + (float)(_bvhText[_pos++] - '0');
             digitFound = true;
         }
 
         // Read decimal point
-        if (pos < bvhText.Length && (bvhText[pos] == '.' || bvhText[pos] == ','))
+        if (_pos < _bvhText.Length && (_bvhText[_pos] == '.' || _bvhText[_pos] == ','))
         {
-            pos++;
+            _pos++;
 
             // Read digits after decimal
             float fac = 0.1f;
-            while (pos < bvhText.Length && bvhText[pos] >= '0' && bvhText[pos] <= '9' && i < 128)
+            while (_pos < _bvhText.Length && _bvhText[_pos] >= '0' && _bvhText[_pos] <= '9' && i < 128)
             {
-                v += fac * (float)(bvhText[pos++] - '0');
+                v += fac * (float)(_bvhText[_pos++] - '0');
                 fac *= 0.1f;
                 digitFound = true;
             }
@@ -197,17 +199,17 @@ public class BVHProcessor
 
     private void skip()
     {
-        while (pos < bvhText.Length && (bvhText[pos] == ' ' || bvhText[pos] == '\t' || bvhText[pos] == '\n' || bvhText[pos] == '\r'))
+        while (_pos < _bvhText.Length && (_bvhText[_pos] == ' ' || _bvhText[_pos] == '\t' || _bvhText[_pos] == '\n' || _bvhText[_pos] == '\r'))
         {
-            pos++;
+            _pos++;
         }
     }
 
     private void skipInLine()
     {
-        while (pos < bvhText.Length && (bvhText[pos] == ' ' || bvhText[pos] == '\t'))
+        while (_pos < _bvhText.Length && (_bvhText[_pos] == ' ' || _bvhText[_pos] == '\t'))
         {
-            pos++;
+            _pos++;
         }
     }
 
@@ -215,10 +217,10 @@ public class BVHProcessor
     {
         bool foundNewline = false;
         skipInLine();
-        while (pos < bvhText.Length && (bvhText[pos] == '\n' || bvhText[pos] == '\r'))
+        while (_pos < _bvhText.Length && (_bvhText[_pos] == '\n' || _bvhText[_pos] == '\r'))
         {
             foundNewline = true;
-            pos++;
+            _pos++;
         }
         assure("newline", foundNewline);
     }
@@ -228,19 +230,19 @@ public class BVHProcessor
         if (!result)
         {
             string errorRegion = "";
-            for (int i = Math.Max(0, pos - 15); i < Math.Min(bvhText.Length, pos + 15); i++)
+            for (int i = Math.Max(0, _pos - 15); i < Math.Min(_bvhText.Length, _pos + 15); i++)
             {
-                if (i == pos - 1)
+                if (i == _pos - 1)
                 {
                     errorRegion += ">>>";
                 }
-                errorRegion += bvhText[i];
-                if (i == pos + 1)
+                errorRegion += _bvhText[i];
+                if (i == _pos + 1)
                 {
                     errorRegion += "<<<";
                 }
             }
-            throw new ArgumentException("Failed to parse BVH data at position " + pos + ". Expected " + what + " around here: " + errorRegion);
+            throw new ArgumentException("Failed to parse BVH data at position " + _pos + ". Expected " + what + " around here: " + errorRegion);
         }
     }
 
@@ -252,22 +254,22 @@ public class BVHProcessor
     private void parse(bool overrideFrameTime, float time)
     {
         // Prepare character table
-        if (charMap == null)
+        if (_charMap == null)
         {
-            charMap = new char[256];
+            _charMap = new char[256];
             for (int i = 0; i < 256; i++)
             {
                 if (i >= 'a' && i <= 'z')
                 {
-                    charMap[i] = (char)(i - 'a' + 'A');
+                    _charMap[i] = (char)(i - 'a' + 'A');
                 }
                 else if (i == '\t' || i == '\n' || i == '\r')
                 {
-                    charMap[i] = ' ';
+                    _charMap[i] = ' ';
                 }
                 else
                 {
-                    charMap[i] = (char)i;
+                    _charMap[i] = (char)i;
                 }
             }
         }
@@ -276,8 +278,8 @@ public class BVHProcessor
         skip();
         assureExpect("HIERARCHY");
 
-        boneList = new List<BVHBone>();
-        root = CreateBone();
+        BoneList = new List<BVHBone>();
+        Root = CreateBone();
 
         // Parse meta data
         skip();
@@ -285,73 +287,75 @@ public class BVHProcessor
         skip();
         assureExpect("FRAMES:");
         skip();
-        assure("frame number", getInt(out frames));
+        assure("frame number", getInt(out Frames));
         skip();
         assureExpect("FRAME TIME:");
         skip();
-        assure("frame time", getFloat(out frameTime));
+        assure("frame time", getFloat(out FrameTime));
 
         if (overrideFrameTime)
         {
-            frameTime = time;
+            FrameTime = time;
         }
 
         // Prepare channels
         int totalChannels = 0;
-        foreach (BVHBone bone in boneList)
+        foreach (BVHBone bone in BoneList)
         {
             totalChannels += bone.channelNumber;
         }
         int channel = 0;
-        channels = new float[totalChannels][];
-        foreach (BVHBone bone in boneList)
+        _channels = new float[totalChannels][];
+        foreach (BVHBone bone in BoneList)
         {
             for (int i = 0; i < bone.channelNumber; i++)
             {
-                channels[channel] = new float[frames];
-                bone.channels[bone.channelOrder[i]].values = channels[channel++];
+                _channels[channel] = new float[Frames];
+                bone.channels[bone.channelOrder[i]].values = _channels[channel++];
             }
         }
 
-        BVHBone leftFoot = boneList.Where(b => b.name.ToLower().Equals("leftfoot")).FirstOrDefault();
-        BVHBone rightFoot = boneList.Where(b => b.name.ToLower().Equals("rightfoot")).FirstOrDefault();
-        BVHBone hip = boneList.Where(b => b.name.ToLower().Equals("hips")).FirstOrDefault();
+        BVHBone leftFoot = BoneList.Where(b => b.name.ToLower().Equals("leftfoot")).FirstOrDefault();
+        BVHBone rightFoot = BoneList.Where(b => b.name.ToLower().Equals("rightfoot")).FirstOrDefault();
+        BVHBone hip = BoneList.Where(b => b.name.ToLower().Equals("hips")).FirstOrDefault();
 
         Vector3 prevLeftFootPosition = Vector3.zero;
         Vector3 prevRightFootPosition = Vector3.zero;
         Vector3 prevHipPosition = Vector3.zero;
+
+        int frames = _endFrame > -1 ? Math.Min(_endFrame, Frames) : Frames;
         // Parse frames
-        for (int i = 0; i < frames; i++)
+        for (int i = _offsetStart; i < frames; i++)
         {
             newline();
             for (channel = 0; channel < totalChannels; channel++)
             {
                 skipInLine();
-                assure("channel value", getFloat(out channels[channel][i]));
+                assure("channel value", getFloat(out _channels[channel][i]));
             }
             // Derive the feature vector
             FeatureVector prevFeatureVector1 = null; // One frame back
             FeatureVector prevFeatureVector2 = null; // Two frames back
-            if (featureVectors.Count > 0)
+            if (FeatureVectors.Count > 0)
             {
-                prevFeatureVector1 = featureVectors[featureVectors.Count - 1];
+                prevFeatureVector1 = FeatureVectors[FeatureVectors.Count - 1];
             }
-            if (featureVectors.Count > 1)
+            if (FeatureVectors.Count > 1)
             {
-                prevFeatureVector2 = featureVectors[featureVectors.Count - 2];
+                prevFeatureVector2 = FeatureVectors[FeatureVectors.Count - 2];
             }
-            FeatureVector featureVector = new FeatureVector(name);
-            featureVector.Frame = i;
+            FeatureVector featureVector = new FeatureVector(Name);
+            featureVector.Frame = i - _offsetStart;
             featureVector.LeftFootPosition = GetBonePosition(leftFoot, i);
             // Get Left Foot Velocity
-            featureVector.LeftFootVelocity = (featureVector.LeftFootPosition - prevLeftFootPosition) / frameTime;
+            featureVector.LeftFootVelocity = (featureVector.LeftFootPosition - prevLeftFootPosition) / FrameTime;
             // Get Right Foot Position
             featureVector.RightFootPosition = GetBonePosition(rightFoot, i);
             // Get Right Foot Velocity
-            featureVector.RightFootVelocity = (featureVector.RightFootPosition - prevRightFootPosition) / frameTime;
+            featureVector.RightFootVelocity = (featureVector.RightFootPosition - prevRightFootPosition) / FrameTime;
             // Get Hip Velocity
             featureVector.HipPosition = new Vector3(hip.channels[0].values[i], hip.channels[1].values[i], hip.channels[2].values[i]);
-            featureVector.HipVelocity = (featureVector.HipPosition - prevHipPosition) / frameTime;
+            featureVector.HipVelocity = (featureVector.HipPosition - prevHipPosition) / FrameTime;
             // Get Hip Position of next two frames
             if (prevFeatureVector1 != null)
             {
@@ -370,7 +374,7 @@ public class BVHProcessor
             prevRightFootPosition = featureVector.RightFootPosition;
             prevHipPosition = featureVector.HipPosition;
 
-            featureVectors.Add(featureVector);
+            FeatureVectors.Add(featureVector);
         }
     }
 
@@ -448,45 +452,54 @@ public class BVHProcessor
                     break;
             }
         } while (peek != '}');
-        boneList.Add(bone);
+        BoneList.Add(bone);
         return bone;
     }
 
     private Vector3 GetBonePosition(BVHBone bone, int frame)
     {
         Vector3 position = new Vector3();
-        Matrix4x4 rotateZ = Matrix4x4.Rotate(Quaternion.Euler(0, 0, bone.channels[5].values[frame]));
-        Matrix4x4 rotateY = Matrix4x4.Rotate(Quaternion.Euler(0, bone.channels[4].values[frame], 0));
-        Matrix4x4 rotateX = Matrix4x4.Rotate(Quaternion.Euler(bone.channels[3].values[frame], 0, 0));
+        Vector3 rotateZVector = new Vector3(0, 0, bone.channels[5].values[frame]);
+        Vector3 rotateYVector = new Vector3(0, bone.channels[4].values[frame], 0);
+        Vector3 rotateXVector = new Vector3(bone.channels[3].values[frame], 0, 0);
+        Matrix4x4 rotateZ = Matrix4x4.Rotate(Quaternion.Euler(rotateZVector));
+        Matrix4x4 rotateY = Matrix4x4.Rotate(Quaternion.Euler(rotateYVector));
+        Matrix4x4 rotateX = Matrix4x4.Rotate(Quaternion.Euler(rotateXVector));
         Matrix4x4 offset = Matrix4x4.Translate(new Vector3(bone.offsetX, bone.offsetY, bone.offsetZ));
         Matrix4x4 model = rotateZ * rotateY * rotateX * offset;
         position = model.MultiplyPoint3x4(position);
         BVHBone parent = bone.parent;
         while (parent != null)
         {
-            Matrix4x4 parentRotateZ = Matrix4x4.Rotate(Quaternion.Euler(0, 0, parent.channels[5].values[frame]));
-            Matrix4x4 parentRotateY = Matrix4x4.Rotate(Quaternion.Euler(0, parent.channels[4].values[frame], 0));
-            Matrix4x4 parentRotateX = Matrix4x4.Rotate(Quaternion.Euler(parent.channels[3].values[frame], 0, 0));
-            Matrix4x4 parentOffset = !parent.name.Equals("Hips") ? Matrix4x4.Translate(new Vector3(parent.offsetX, parent.offsetY, parent.offsetZ)) : Matrix4x4.identity;
-            Matrix4x4 parentModel = parentRotateZ * parentRotateY * parentRotateX * parentOffset;
-            position = parentModel.MultiplyPoint3x4(position);
+            rotateZVector = new Vector3(0, 0, parent.channels[5].values[frame]);
+            rotateYVector = new Vector3(0, parent.channels[4].values[frame], 0);
+            rotateXVector = new Vector3(parent.channels[3].values[frame], 0, 0);
+            rotateZ = Matrix4x4.Rotate(Quaternion.Euler(rotateZVector));
+            rotateY = Matrix4x4.Rotate(Quaternion.Euler(rotateYVector));
+            rotateX = Matrix4x4.Rotate(Quaternion.Euler(rotateXVector));
+            // Ignore hip position
+            offset = !parent.name.Equals("Hips") ? Matrix4x4.Translate(new Vector3(parent.offsetX, parent.offsetY, parent.offsetZ)) : Matrix4x4.identity;
+            model = rotateZ * rotateY * rotateX * offset;
+            position = model.MultiplyPoint3x4(position);
             parent = parent.parent;
         }
         return position;
     }
 
-    public BVHProcessor(string bvhText, string name)
+    public BVHProcessor(string bvhText, string name, int offsetStart, int endFrame)
     {
-        this.bvhText = bvhText;
-        this.name = name;
-        this.featureVectors = new List<FeatureVector>();
+        _bvhText = bvhText;
+        _offsetStart = offsetStart;
+        _endFrame = endFrame;
+        Name = name;
+        FeatureVectors = new List<FeatureVector>();
 
         parse(false, 0f);
     }
 
     public BVHProcessor(string bvhText, float time)
     {
-        this.bvhText = bvhText;
+        _bvhText = bvhText;
 
         parse(true, time);
     }

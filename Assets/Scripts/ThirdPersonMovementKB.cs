@@ -52,7 +52,7 @@ public class ThirdPersonMovementKB : MonoBehaviour
 
             _moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
             _moveVelocity = _moveDirection.normalized * _speed * Time.deltaTime;
-            _controller.Move(_moveVelocity);
+            // _controller.Move(_moveVelocity);
         }
         else
         {

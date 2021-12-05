@@ -5,8 +5,9 @@ using UnityEngine;
 
 public class CreateMatchingFeaturesDatabase : ScriptableWizard
 {
-    [SerializeField]
-    private string sourceDir = "Assets/Resources/lafan1";
+    [SerializeField] private string sourceDir = "Assets/Resources/lafan1";
+    [SerializeField] private int offsetStart = 0;
+    [SerializeField] private int endFrame = -1;
 
     [MenuItem("Motion Matching/Create Matching Features Database From BVH")]
     static void MotionMatchingWizard()
@@ -25,8 +26,8 @@ public class CreateMatchingFeaturesDatabase : ScriptableWizard
             {
                 FileInfo fi = new FileInfo(file);
                 string bvhData = File.ReadAllText(file);
-                BVHProcessor bp = new BVHProcessor(bvhData, fi.Name.Split('.')[0]);
-                WriteDatabase(output, bp.featureVectors);
+                BVHProcessor bp = new BVHProcessor(bvhData, fi.Name.Split('.')[0], offsetStart, endFrame);
+                WriteDatabase(output, bp.FeatureVectors);
             }
         }
     }
