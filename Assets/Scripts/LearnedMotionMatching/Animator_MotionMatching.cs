@@ -4,16 +4,15 @@ using UnityEngine;
 public class Animator_MotionMatching : MonoBehaviour
 {
     private Animator _animator;
-    [SerializeField] private Avatar _avatar;
-    [SerializeField] private string _databaseFilePath = "Assets/MatchingFeaturesDatabase.sloth";
-    //   [SerializeField] private GameObject _hips = null;
-    //   [SerializeField] private GameObject _leftFoot = null;
-    //   [SerializeField] private GameObject _rightFoot = null;
+    [SerializeField] private string _databaseFilePath = "Assets/MatchingFeaturesDatabase.csv";
+    [SerializeField] private Transform _hips = null;
+    [SerializeField] private Transform _leftFoot = null;
+    [SerializeField] private Transform _rightFoot = null;
     private Vector3 _prevLeftFootPos;
     private Vector3 _prevRightFootPos;
     private Vector3 _leftFootVelocity;
     private Vector3 _rightFootVelocity;
-    private Vector3 _hipPosition;
+    private Vector3 _prevHipPosition;
     private Vector3 _hipVelocity;
     private Vector3 _trajectoryPos1;
     private Vector3 _trajectoryPos2;
@@ -45,6 +44,8 @@ public class Animator_MotionMatching : MonoBehaviour
         {
             _animator.Play("Idle", 0);
             _isIdle = true;
+            _currentClip = "";
+            _currentFrameTime = 0;
         }
         else if (_thirdPersonMovement.MoveDirection != Vector3.zero)
         {
@@ -75,17 +76,13 @@ public class Animator_MotionMatching : MonoBehaviour
 
     private void SetFeatures(float dt)
     {
-        Vector3 newLeftFootPosition = _animator.GetIKPosition(AvatarIKGoal.LeftFoot);
-        Vector3 newRightFootPosition = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
-        Vector3 newHipPosition = _animator.rootPosition;
+        _leftFootVelocity = (_leftFoot.position - _prevLeftFootPos) / dt;
+        _rightFootVelocity = (_rightFoot.position - _prevRightFootPos) / dt;
+        _hipVelocity = (_hips.position - _prevHipPosition) / dt;
 
-        _leftFootVelocity = (newLeftFootPosition - _prevLeftFootPos) / dt;
-        _rightFootVelocity = (newRightFootPosition - _prevRightFootPos) / dt;
-        _hipVelocity = (newHipPosition - _hipPosition) / dt;
-
-        _prevLeftFootPos = newLeftFootPosition;
-        _prevRightFootPos = newRightFootPosition;
-        _hipPosition = newHipPosition;
+        _prevLeftFootPos = _leftFoot.position;
+        _prevRightFootPos = _rightFoot.position;
+        _prevHipPosition = _hips.position;
 
         _trajectoryPos1 = _thirdPersonMovement.MoveDirection;
         _trajectoryPos2 = _thirdPersonMovement.MoveDirection * 2;
@@ -128,23 +125,21 @@ public class Animator_MotionMatching : MonoBehaviour
     {
         float[] currentFeatureVector = new float[27];
 
-        Vector3 leftFootPosition = _animator.GetIKPosition(AvatarIKGoal.LeftFoot);
-        Vector3 rightFootPosition = _animator.GetIKPosition(AvatarIKGoal.RightFoot);
+        // Calculate true local position - feet 
+        Vector3 leftFootPosition = _leftFoot.position - _leftFoot.root.position;
+        Vector3 rightFootPosition = _rightFoot.position - _rightFoot.root.position;
 
-        leftFootPosition *= 20;
-        rightFootPosition *= 20;
-
-        currentFeatureVector[0] = leftFootPosition.x;
-        currentFeatureVector[1] = leftFootPosition.y;
-        currentFeatureVector[2] = leftFootPosition.z;
+        currentFeatureVector[0] = _leftFoot.localPosition.x;
+        currentFeatureVector[1] = _leftFoot.localPosition.y;
+        currentFeatureVector[2] = _leftFoot.localPosition.z;
 
         currentFeatureVector[3] = _leftFootVelocity.x;
         currentFeatureVector[4] = _leftFootVelocity.y;
         currentFeatureVector[5] = _leftFootVelocity.z;
 
-        currentFeatureVector[6] = rightFootPosition.x;
-        currentFeatureVector[7] = rightFootPosition.y;
-        currentFeatureVector[8] = rightFootPosition.z;
+        currentFeatureVector[6] = _rightFoot.localPosition.x;
+        currentFeatureVector[7] = _rightFoot.localPosition.y;
+        currentFeatureVector[8] = _rightFoot.localPosition.z;
 
         currentFeatureVector[9] = _rightFootVelocity.x;
         currentFeatureVector[10] = _rightFootVelocity.y;

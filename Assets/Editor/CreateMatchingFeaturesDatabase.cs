@@ -17,7 +17,7 @@ public class CreateMatchingFeaturesDatabase : ScriptableWizard
 
     private void OnWizardCreate()
     {
-        string output = EditorUtility.SaveFilePanel("New Matching Features Database", "Assets", "MatchingFeaturesDatabase", "sloth");
+        string output = EditorUtility.SaveFilePanel("New Matching Features Database", "Assets", "MatchingFeaturesDatabase", "csv");
         string[] files = Directory.GetFiles(sourceDir);
 
         foreach (string file in files)
