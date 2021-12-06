@@ -12,8 +12,12 @@ public class ThirdPersonMovementKB : MonoBehaviour
 
     private Vector3 _moveDirection;
     private Vector3 _moveVelocity;
-    public Vector3 MoveDirection { get { return _moveDirection; } }
-    public Vector3 MoveVelocity { get { return _moveVelocity; } }
+    private Vector3 _prevMoveDirection;
+    private Vector3 _prevMoveVelocity;
+    public Vector3 MoveDirection1 { get { return _prevMoveDirection; } }
+    public Vector3 MoveDirection2 { get { return _moveDirection; } }
+    public Vector3 MoveVelocity1 { get { return _prevMoveVelocity; } }
+    public Vector3 MoveVelocity2 { get { return _moveVelocity; } }
 
     void Start()
     {
@@ -50,9 +54,13 @@ public class ThirdPersonMovementKB : MonoBehaviour
             float angle = Mathf.SmoothDampAngle(transform.eulerAngles.y, targetAngle, ref _turnSmoothVelocity, _turnSmoothTime);
             transform.rotation = Quaternion.Euler(0f, angle, 0f);
 
+            // Pre-update the values from previous frame
+            _prevMoveDirection = _moveDirection;
+            _prevMoveVelocity = _moveVelocity;
+
             _moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
             _moveVelocity = _moveDirection.normalized * _speed * Time.deltaTime;
-            // _controller.Move(_moveVelocity);
+            _controller.Move(_moveVelocity);
         }
         else
         {

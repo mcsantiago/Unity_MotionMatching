@@ -40,14 +40,14 @@ public class Animator_MotionMatching : MonoBehaviour
 
     private void Update()
     {
-        if (_thirdPersonMovement.MoveDirection == Vector3.zero && !_animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
+        if (_thirdPersonMovement.MoveDirection2 == Vector3.zero && !_animator.GetCurrentAnimatorStateInfo(0).IsName("Idle"))
         {
             _animator.Play("Idle", 0);
             _isIdle = true;
             _currentClip = "";
             _currentFrameTime = 0;
         }
-        else if (_thirdPersonMovement.MoveDirection != Vector3.zero)
+        else if (_thirdPersonMovement.MoveDirection2 != Vector3.zero)
         {
             _isIdle = false;
         }
@@ -84,10 +84,10 @@ public class Animator_MotionMatching : MonoBehaviour
         _prevRightFootPos = _rightFoot.position;
         _prevHipPosition = _hips.position;
 
-        _trajectoryPos1 = _thirdPersonMovement.MoveDirection;
-        _trajectoryPos2 = _thirdPersonMovement.MoveDirection * 2;
-        _trajectoryVel1 = _thirdPersonMovement.MoveVelocity;
-        _trajectoryVel2 = _thirdPersonMovement.MoveVelocity;
+        _trajectoryPos1 = _thirdPersonMovement.MoveDirection1;
+        _trajectoryPos2 = _thirdPersonMovement.MoveDirection2;
+        _trajectoryVel1 = _thirdPersonMovement.MoveVelocity1;
+        _trajectoryVel2 = _thirdPersonMovement.MoveVelocity2;
 
     }
 
@@ -129,17 +129,17 @@ public class Animator_MotionMatching : MonoBehaviour
         Vector3 leftFootPosition = _leftFoot.position - _leftFoot.root.position;
         Vector3 rightFootPosition = _rightFoot.position - _rightFoot.root.position;
 
-        currentFeatureVector[0] = _leftFoot.localPosition.x;
-        currentFeatureVector[1] = _leftFoot.localPosition.y;
-        currentFeatureVector[2] = _leftFoot.localPosition.z;
+        currentFeatureVector[0] = leftFootPosition.x;
+        currentFeatureVector[1] = leftFootPosition.y;
+        currentFeatureVector[2] = leftFootPosition.z;
 
         currentFeatureVector[3] = _leftFootVelocity.x;
         currentFeatureVector[4] = _leftFootVelocity.y;
         currentFeatureVector[5] = _leftFootVelocity.z;
 
-        currentFeatureVector[6] = _rightFoot.localPosition.x;
-        currentFeatureVector[7] = _rightFoot.localPosition.y;
-        currentFeatureVector[8] = _rightFoot.localPosition.z;
+        currentFeatureVector[6] = rightFootPosition.x;
+        currentFeatureVector[7] = rightFootPosition.y;
+        currentFeatureVector[8] = rightFootPosition.z;
 
         currentFeatureVector[9] = _rightFootVelocity.x;
         currentFeatureVector[10] = _rightFootVelocity.y;
