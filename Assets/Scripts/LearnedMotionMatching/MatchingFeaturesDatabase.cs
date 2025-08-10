@@ -77,6 +77,12 @@ public class MatchingFeaturesDatabase
     /// query feature vector </summary>
     public (string, float) GetClosestFeature(float[] query)
     {
+        if (_database == null || _database.Count == 0)
+        {
+            Debug.LogError("Feature database is empty.");
+            return (string.Empty, 0f);
+        }
+
         int minIndex = -1;
         float minDistance = float.MaxValue;
         for (int i = 0; i < _database.Count; i++)
@@ -88,12 +94,56 @@ public class MatchingFeaturesDatabase
                 minDistance = d;
             }
         }
+
+        if (minIndex < 0)
+        {
+            return (string.Empty, 0f);
+        }
+
         string sequenceName = _database[minIndex].name;
-        int sequenceLength = _database.Count(d => d.name.ToLower().Equals(sequenceName)); // This might not scale in large databases
+        // Count frames in the same sequence (case-insensitive)
+        int sequenceLength = _database.Count(d => d.name.Equals(sequenceName, StringComparison.OrdinalIgnoreCase));
         int currentFrame = _database[minIndex].frame;
 
-        Debug.Log("Found sequence " + sequenceName + " with frame " + currentFrame + " and distance " + minDistance);
-        return (sequenceName, (float)currentFrame / sequenceLength);
+        // Normalize time to [0,1)
+        float t = sequenceLength > 0 ? Mathf.Clamp01((float)currentFrame / Mathf.Max(1, sequenceLength - 1)) : 0f;
+
+        Debug.Log($"Found sequence {sequenceName} frame {currentFrame}/{sequenceLength} dist {minDistance:F4}");
+        return (sequenceName, t);
+    }
+
+    /// <summary>
+    /// Returns the closest record including its name, frame index, feature vector, and distance.
+    /// </summary>
+    public (string name, int frame, float[] vector, float distance) GetClosestRecord(float[] query)
+    {
+        if (_database == null || _database.Count == 0)
+        {
+            return (string.Empty, 0, null, float.MaxValue);
+        }
+
+        int minIndex = -1;
+        float minDistance = float.MaxValue;
+        for (int i = 0; i < _database.Count; i++)
+        {
+            float d = Distance(query, _database[i].featureVector);
+            if (d < minDistance)
+            {
+                minIndex = i;
+                minDistance = d;
+            }
+        }
+
+        if (minIndex < 0)
+        {
+            return (string.Empty, 0, null, float.MaxValue);
+        }
+
+        var rec = _database[minIndex];
+        // return a copy of the vector to keep DB immutable outside
+        float[] vec = new float[rec.featureVector.Length];
+        Array.Copy(rec.featureVector, vec, rec.featureVector.Length);
+        return (rec.name, rec.frame, vec, minDistance);
     }
 
     /// <summary>Calculates the Euclidean distance between 

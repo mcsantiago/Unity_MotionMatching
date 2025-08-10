@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -314,7 +314,7 @@ public class BVHProcessor
                 bone.channels[bone.channelOrder[i]].values = _channels[channel++];
             }
         }
-
+        
         BVHBone leftFoot = BoneList.Where(b => b.name.ToLower().Equals("leftfoot")).FirstOrDefault();
         BVHBone rightFoot = BoneList.Where(b => b.name.ToLower().Equals("rightfoot")).FirstOrDefault();
         BVHBone hip = BoneList.Where(b => b.name.ToLower().Equals("hips")).FirstOrDefault();
@@ -459,9 +459,10 @@ public class BVHProcessor
     private Vector3 GetBonePosition(BVHBone bone, int frame)
     {
         Vector3 position = new Vector3();
-        Vector3 rotateZVector = new Vector3(0, 0, bone.channels[5].values[frame]);
-        Vector3 rotateYVector = new Vector3(0, bone.channels[4].values[frame], 0);
-        Vector3 rotateXVector = new Vector3(bone.channels[3].values[frame], 0, 0);
+        // Note: BVH convention is typically ZXY or XYZ; keep existing but guard for missing rotation channels
+        Vector3 rotateZVector = new Vector3(0, 0, bone.channels[5].enabled ? bone.channels[5].values[frame] : 0f);
+        Vector3 rotateYVector = new Vector3(0, bone.channels[4].enabled ? bone.channels[4].values[frame] : 0f, 0);
+        Vector3 rotateXVector = new Vector3(bone.channels[3].enabled ? bone.channels[3].values[frame] : 0f, 0, 0);
         Matrix4x4 rotateZ = Matrix4x4.Rotate(Quaternion.Euler(rotateZVector));
         Matrix4x4 rotateY = Matrix4x4.Rotate(Quaternion.Euler(rotateYVector));
         Matrix4x4 rotateX = Matrix4x4.Rotate(Quaternion.Euler(rotateXVector));
@@ -471,9 +472,9 @@ public class BVHProcessor
         BVHBone parent = bone.parent;
         while (parent != null)
         {
-            rotateZVector = new Vector3(0, 0, parent.channels[5].values[frame]);
-            rotateYVector = new Vector3(0, parent.channels[4].values[frame], 0);
-            rotateXVector = new Vector3(parent.channels[3].values[frame], 0, 0);
+            rotateZVector = new Vector3(0, 0, parent.channels[5].enabled ? parent.channels[5].values[frame] : 0f);
+            rotateYVector = new Vector3(0, parent.channels[4].enabled ? parent.channels[4].values[frame] : 0f, 0);
+            rotateXVector = new Vector3(parent.channels[3].enabled ? parent.channels[3].values[frame] : 0f, 0, 0);
             rotateZ = Matrix4x4.Rotate(Quaternion.Euler(rotateZVector));
             rotateY = Matrix4x4.Rotate(Quaternion.Euler(rotateYVector));
             rotateX = Matrix4x4.Rotate(Quaternion.Euler(rotateXVector));
